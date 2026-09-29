@@ -113,7 +113,7 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
 .cart-panel{right:0;top:0;bottom:0;width:min(470px,100%);padding:32px;overflow:auto}
 .cart-panel h2,.checkout-panel h2{font-family:"Cormorant Garamond",serif;font-size:45px;font-weight:500}
 .cart-items{margin:25px 0;border-top:1px solid var(--line)}
-.cart-item{display:flex;justify-content:space-between;gap:15px;padding:17px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cart-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:14px;padding:17px 0;border-bottom:1px solid var(--line);font-size:13px}.cart-item-main small{display:block;color:var(--muted);margin-top:3px}.qty-control{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:3px 7px}.qty-control button{width:24px;height:24px;background:none;border:0;color:var(--cream);cursor:pointer;font-size:16px}.qty-control button:hover{color:var(--gold)}.qty-control span{min-width:18px;text-align:center;font-size:12px}.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.product-grid .card{padding:25px}.product-grid .card h4{margin:7px 0}.product-grid .card p{margin:0}
 .cart-item small{display:block;color:var(--muted);margin-top:3px}
 .remove{background:none;border:0;color:#9d9284;cursor:pointer;font-size:10px}
 .cart-total{display:flex;justify-content:space-between;font-size:18px;margin:25px 0}
@@ -126,7 +126,7 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
 .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold)}
 .payment-note{background:rgba(201,166,107,.08);border:1px solid rgba(201,166,107,.22);padding:13px;font-size:11px;color:#c9c1b4;margin-bottom:20px}
 .order-success{text-align:center;padding:70px 20px}.order-success h3{font-size:55px;margin:12px 0}.order-success p{color:var(--muted);max-width:470px;margin:auto}
-@media(max-width:800px){.product-panel{inset:0;grid-template-columns:1fr}.product-visual{min-height:380px}.product-copy{padding:40px 28px}.product-copy h2{font-size:48px}.checkout-panel{inset:0;padding:30px 22px}.checkout-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+@media(max-width:800px){.product-panel{inset:0;grid-template-columns:1fr}.product-visual{min-height:380px}.product-copy{padding:40px 28px}.product-copy h2{font-size:48px}.checkout-panel{inset:0;padding:30px 22px}.checkout-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.product-grid{grid-template-columns:1fr}.cart-item{grid-template-columns:1fr auto}.cart-item .remove{grid-column:1/-1;justify-self:start}}
 
 </style>
 </head>
@@ -134,7 +134,7 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
 <nav class="nav">
   <a href="#" class="logo">SK<small>PERFUMES</small></a>
   <div class="navlinks"><a href="#collection">Collection</a><a href="#story">Our Story</a><a href="#values">Why SK</a></div>
-  <button class="cart" onclick="openCart()">BAG <span id="cartCount">0</span></button>
+  <button class="cart" onclick="openCart()" aria-label="Open shopping bag">BAG <span id="cartCount">0</span></button>
 </nav>
 
 <header class="hero">
@@ -155,19 +155,19 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
   <div class="products">
     <article class="card product-click" onclick="openProduct('Aura de-Alpine')" tabindex="0">
       <div class="bottle-wrap clear"><div class="bottle"></div></div>
-      <div class="card-info"><div class="number">Aura de-Alpine</div><h4>Aura de-Alpine</h4><p>A crisp alpine-inspired fragrance with a clean, elevated character.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="addToBag('SK No. 01')">ADD TO BAG</button></div></div>
+      <div class="card-info"><div class="number">Aura de-Alpine</div><h4>Aura de-Alpine</h4><p>A crisp alpine-inspired fragrance with a clean, elevated character.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="event.stopPropagation(); addToBag('Aura de-Alpine')">ADD TO BAG</button></div></div>
     </article>
     <article class="card product-click" onclick="openProduct('Pine & Essence')" tabindex="0">
       <div class="bottle-wrap blue"><div class="bottle"></div></div>
-      <div class="card-info"><div class="number">Pine & Essence</div><h4>Pine & Essence</h4><p>A fresh, green mountain character with a deep, confident trail.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="addToBag('SK No. 02')">ADD TO BAG</button></div></div>
+      <div class="card-info"><div class="number">Pine & Essence</div><h4>Pine & Essence</h4><p>A fresh, green mountain character with a deep, confident trail.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="event.stopPropagation(); addToBag('Pine & Essence')">ADD TO BAG</button></div></div>
     </article>
     <article class="card product-click" onclick="openProduct('KO HER')" tabindex="0">
       <div class="bottle-wrap amber"><div class="bottle"></div></div>
-      <div class="card-info"><div class="number">KO HER</div><h4>KO HER</h4><p>A refined, graceful composition inspired by the calm of high mountain valleys.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="addToBag('SK No. 03')">ADD TO BAG</button></div></div>
+      <div class="card-info"><div class="number">KO HER</div><h4>KO HER</h4><p>A refined, graceful composition inspired by the calm of high mountain valleys.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="event.stopPropagation(); addToBag('KO HER')">ADD TO BAG</button></div></div>
     </article>
     <article class="card product-click" onclick="openProduct('Misty Peaks')" tabindex="0">
       <div class="bottle-wrap green"><div class="bottle"></div></div>
-      <div class="card-info"><div class="number">Misty Peaks</div><h4>Misty Peaks</h4><p>A mysterious, atmospheric fragrance with a soft and memorable depth.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="addToBag('SK No. 04')">ADD TO BAG</button></div></div>
+      <div class="card-info"><div class="number">Misty Peaks</div><h4>Misty Peaks</h4><p>A mysterious, atmospheric fragrance with a soft and memorable depth.</p><div class="card-bottom"><strong>Rs. 2,499</strong><button class="add" onclick="event.stopPropagation(); addToBag('Misty Peaks')">ADD TO BAG</button></div></div>
     </article>
   </div>
 </section>
@@ -219,7 +219,7 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
 
 <div class="overlay" id="checkoutOverlay"><div class="panel checkout-panel"><button class="close" onclick="closeOverlay('checkoutOverlay')">×</button>
 <div id="checkoutContent"><div class="kicker">SECURE ORDER</div><h2>Complete your order.</h2>
-<div class="payment-note">Cash on Delivery is available in this prototype. Online payment can be connected later.</div>
+<div class="payment-note"><strong>Cash on Delivery</strong><br>For launch, customers can place orders through WhatsApp. You can confirm stock, delivery charges and the final order before dispatch.</div>
 <div class="checkout-grid"><div class="field"><label>Full Name</label><input id="customerName" placeholder="Your name"></div>
 <div class="field"><label>Phone</label><input id="customerPhone" placeholder="03XX XXXXXXX"></div>
 <div class="field full"><label>Delivery Address</label><textarea id="customerAddress" rows="3" placeholder="House, street, area"></textarea></div>
@@ -227,8 +227,7 @@ section{padding:72px 5vw}.products{grid-template-columns:1fr}.bottle-wrap{height
 <div class="field"><label>Payment</label><select id="payment"><option>Cash on Delivery</option><option>Online Payment — Coming Soon</option></select></div></div>
 <div class="cart-total"><span>Order total</span><strong id="checkoutTotal">Rs. 0</strong></div>
 <button class="cta" id="whatsappOrderBtn" onclick="sendOrderToWhatsApp()">ORDER VIA WHATSAPP <span>→</span></button>
-<div style="height:10px"></div>
-<button class="cta" style="background:transparent" onclick="placeOrder()">DEMO ORDER CONFIRMATION</button></div></div></div>
+<p style="color:var(--muted);font-size:10px;margin-top:14px">Your WhatsApp message will contain the selected products, total, and delivery details. No online payment is taken on this version.</p></div></div></div>
 
 
 <section class="section" id="cod-trust">
@@ -264,11 +263,41 @@ function closeOverlay(id){document.getElementById(id).classList.remove("open");i
 function closeOnBackdrop(e,id){if(e.target.id===id)closeOverlay(id)}
 function addToBag(name){let x=bag.find(i=>i.name===name);x?x.qty++:bag.push({name,qty:1});saveBag();let t=document.getElementById("toast");t.textContent=name+" added to your bag";t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
 function openProduct(name){const p=products[name];document.getElementById("productName").textContent=name;document.getElementById("productDescription").textContent=p.description;document.getElementById("productCharacter").textContent=p.character;document.getElementById("productPrice").textContent=money(p.price);document.getElementById("productNotes").innerHTML=p.notes.map(n=>`<span class="note">${n}</span>`).join("");const v=document.getElementById("productVisual");v.className="product-visual "+p.cls;v.innerHTML='<div class="bottle"></div>';document.getElementById("productAdd").onclick=()=>{addToBag(name);closeOverlay("productOverlay");openCart()};openOverlay("productOverlay")}
-function renderCart(){const b=document.getElementById("cartItems");if(!bag.length){b.innerHTML='<div class="empty">Your bag is waiting for its first signature scent.</div>';document.getElementById("checkoutBtn").style.display="none"}else{b.innerHTML=bag.map((x,i)=>`<div class="cart-item"><div><strong>${x.name}</strong><small>${x.qty} × ${money(products[x.name].price)}</small></div><button class="remove" onclick="removeItem(${i})">REMOVE</button></div>`).join("");document.getElementById("checkoutBtn").style.display="inline-flex"}const total=bag.reduce((s,x)=>s+products[x.name].price*x.qty,0);document.getElementById("cartTotal").textContent=money(total);document.getElementById("checkoutTotal").textContent=money(total)}
+function renderCart(){
+  const b=document.getElementById("cartItems");
+  if(!bag.length){
+    b.innerHTML='<div class="empty">Your bag is waiting for its first signature scent.</div>';
+    document.getElementById("checkoutBtn").style.display="none";
+  }else{
+    b.innerHTML=bag.map((x,i)=>{
+      const p=products[x.name];
+      return `<div class="cart-item">
+        <div class="cart-item-main"><strong>${x.name}</strong><small>${money(p.price)} each · ${money(p.price*x.qty)}</small></div>
+        <div class="qty-control">
+          <button aria-label="Decrease quantity" onclick="changeQty(${i},-1)">−</button>
+          <span>${x.qty}</span>
+          <button aria-label="Increase quantity" onclick="changeQty(${i},1)">+</button>
+        </div>
+        <button class="remove" onclick="removeItem(${i})">REMOVE</button>
+      </div>`;
+    }).join("");
+    document.getElementById("checkoutBtn").style.display="inline-flex";
+  }
+  const total=bag.reduce((s,x)=>s+products[x.name].price*x.qty,0);
+  document.getElementById("cartTotal").textContent=money(total);
+  document.getElementById("checkoutTotal").textContent=money(total);
+}
+function changeQty(i,delta){
+  if(!bag[i]) return;
+  bag[i].qty+=delta;
+  if(bag[i].qty<=0) bag.splice(i,1);
+  saveBag();
+  renderCart();
+}
 function removeItem(i){bag.splice(i,1);saveBag();renderCart()}
 function openCart(){renderCart();openOverlay("cartOverlay")}
 function openCheckout(){if(!bag.length)return;closeOverlay("cartOverlay");renderCart();openOverlay("checkoutOverlay")}
-function placeOrder(){const n=document.getElementById("customerName").value.trim(),p=document.getElementById("customerPhone").value.trim(),a=document.getElementById("customerAddress").value.trim(),c=document.getElementById("customerCity").value.trim();if(!n||!p||!a||!c){alert("Please complete your name, phone, address and city.");return}const id="SK-"+Date.now().toString().slice(-7),total=bag.reduce((s,x)=>s+products[x.name].price*x.qty,0);document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><div class="kicker">ORDER RECEIVED</div><h3>Thank you, ${n}.</h3><p>Your SK order <strong>${id}</strong> has been prepared for Cash on Delivery. Total: <strong>${money(total)}</strong>.</p><br><p>This prototype is ready to connect to a real order-management system or WhatsApp.</p><br><button class="cta" onclick="location.reload()">CONTINUE SHOPPING</button></div>`;bag=[];saveBag()}
+function placeOrder(){sendOrderToWhatsApp()}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".overlay.open").forEach(x=>x.classList.remove("open"));document.body.style.overflow=""}});
 updateBagCount();
 </script>
@@ -278,12 +307,14 @@ const SK_WHATSAPP = "923000000000"; // Replace with SK business WhatsApp number,
 
 function buildWhatsAppMessage(customer) {
   const total = bag.reduce((s,x)=>s + products[x.name].price*x.qty, 0);
+  const orderId = "SK-" + Math.random().toString(36).slice(2,8).toUpperCase();
   return [
-    "SK PERFUMES — NEW ORDER",
+    "*SK PERFUMES — NEW ORDER*",
+    "Order ID: " + orderId,
     "-------------------------",
     ...bag.map(x => `${x.name} × ${x.qty} — ${money(products[x.name].price*x.qty)}`),
     "-------------------------",
-    `TOTAL: ${money(total)}`,
+    `*TOTAL: ${money(total)}*`,
     "",
     `Name: ${customer.name}`,
     `Phone: ${customer.phone}`,
@@ -294,6 +325,7 @@ function buildWhatsAppMessage(customer) {
 }
 
 function sendOrderToWhatsApp() {
+  if (!bag.length) { alert("Your bag is empty."); return; }
   const customer = {
     name: document.getElementById("customerName").value.trim(),
     phone: document.getElementById("customerPhone").value.trim(),
@@ -304,15 +336,15 @@ function sendOrderToWhatsApp() {
     alert("Please complete your name, phone, address and city.");
     return;
   }
-  if (SK_WHATSAPP === "923000000000") {
-    alert("SK WhatsApp is not connected yet. Replace SK_WHATSAPP in the website code with your business WhatsApp number.");
+  if (!/^03\d{9}$/.test(customer.phone.replace(/[\s-]/g,""))) {
+    alert("Please enter a valid Pakistani mobile number, for example 03001234567.");
     return;
   }
-  window.open(
-    "https://wa.me/" + SK_WHATSAPP + "?text=" +
-    encodeURIComponent(buildWhatsAppMessage(customer)),
-    "_blank"
-  );
+  if (SK_WHATSAPP === "923000000000") {
+    alert("The store is ready, but SK's WhatsApp number still needs to be connected. Replace SK_WHATSAPP in the website code with your business WhatsApp number.");
+    return;
+  }
+  window.open("https://wa.me/" + SK_WHATSAPP + "?text=" + encodeURIComponent(buildWhatsAppMessage(customer)), "_blank");
 }
 </script>
 
