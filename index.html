@@ -303,7 +303,7 @@ updateBagCount();
 </script>
 
 <script>
-const SK_WHATSAPP = "923401531299"; // SK Perfumes WhatsApp, digits only.
+const SK_WHATSAPP = "923000000000"; // Replace with SK business WhatsApp number, digits only.
 
 function buildWhatsAppMessage(customer) {
   const total = bag.reduce((s,x)=>s + products[x.name].price*x.qty, 0);
@@ -338,6 +338,10 @@ function sendOrderToWhatsApp() {
   }
   if (!/^03\d{9}$/.test(customer.phone.replace(/[\s-]/g,""))) {
     alert("Please enter a valid Pakistani mobile number, for example 03001234567.");
+    return;
+  }
+  if (SK_WHATSAPP === "923000000000") {
+    alert("The store is ready, but SK's WhatsApp number still needs to be connected. Replace SK_WHATSAPP in the website code with your business WhatsApp number.");
     return;
   }
   window.open("https://wa.me/" + SK_WHATSAPP + "?text=" + encodeURIComponent(buildWhatsAppMessage(customer)), "_blank");
