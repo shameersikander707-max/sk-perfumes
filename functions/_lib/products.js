@@ -8,3 +8,5 @@ export const PRODUCTS = {
 export function priceFor(name) {
   return PRODUCTS[name] ?? null;
 }
+
+export const getProductPrice = priceFor;
