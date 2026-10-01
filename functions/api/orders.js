@@ -126,7 +126,7 @@ export async function onRequestPost({ request, env }) {
 }
 
 export async function onRequestGet({ request, env }) {
-  if (!(await validSession(request, env))) {
+  if (!(await validSession(request, env.ADMIN_SESSION_SECRET))) {
     return json({
       ok: false,
       error: 'Unauthorized.'
