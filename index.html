@@ -303,7 +303,7 @@ updateBagCount();
 </script>
 
 <script>
-const SK_WHATSAPP = "923000000000"; // Replace with SK business WhatsApp number, digits only.
+const SK_WHATSAPP = "923401531299"; // SK Perfumes WhatsApp, digits only.
 
 function buildWhatsAppMessage(customer) {
   const total = bag.reduce((s,x)=>s + products[x.name].price*x.qty, 0);
@@ -324,7 +324,7 @@ function buildWhatsAppMessage(customer) {
   ].join("\n");
 }
 
-function sendOrderToWhatsApp() {
+async function sendOrderToWhatsApp() {
   if (!bag.length) { alert("Your bag is empty."); return; }
   const customer = {
     name: document.getElementById("customerName").value.trim(),
@@ -340,11 +340,19 @@ function sendOrderToWhatsApp() {
     alert("Please enter a valid Pakistani mobile number, for example 03001234567.");
     return;
   }
-  if (SK_WHATSAPP === "923000000000") {
-    alert("The store is ready, but SK's WhatsApp number still needs to be connected. Replace SK_WHATSAPP in the website code with your business WhatsApp number.");
-    return;
-  }
-  window.open("https://wa.me/" + SK_WHATSAPP + "?text=" + encodeURIComponent(buildWhatsAppMessage(customer)), "_blank");
+  const btn=document.getElementById("whatsappOrderBtn");
+  btn.disabled=true; btn.style.opacity=.6;
+  try {
+    const response = await fetch("/api/orders", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({customer,payment:"Cash on Delivery",items:bag})});
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Could not save your order. Please try again.");
+    const message = buildWhatsAppMessage(customer).replace(/^Order ID: .*$/m, "Order ID: " + data.orderId);
+    window.open("https://wa.me/" + SK_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
+    bag=[]; saveBag();
+    document.getElementById("checkoutContent").innerHTML='<div class="kicker">ORDER RECEIVED</div><h2>Thank you.</h2><p style="color:var(--muted);line-height:1.8">Your order <strong>'+data.orderId+'</strong> has been recorded. WhatsApp has been opened so you can send the order to SK Perfumes for confirmation.</p><button class="cta" onclick="closeOverlay(\"checkoutOverlay\")">CONTINUE SHOPPING <span>→</span></button>';
+  } catch(e) {
+    alert(e.message);
+  } finally { btn.disabled=false; btn.style.opacity=1; }
 }
 </script>
 
