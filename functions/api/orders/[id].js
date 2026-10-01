@@ -1,4 +1,4 @@
-import { validSession } from '../_lib/auth.js';
+import { validSession } from '../../_lib/auth.js';
 
 export async function onRequestPatch({ request, env, params }) {
   if (!(await validSession(request, env.ADMIN_SESSION_SECRET))) {
