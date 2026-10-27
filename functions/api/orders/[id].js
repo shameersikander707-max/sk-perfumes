@@ -31,19 +31,25 @@ export async function onRequestPatch({ request, env, params }) {
     return json({ ok: false, error: 'Invalid request.' }, 400);
   }
 
-  if (!ALLOWED.includes(body.status)) {
+  const action = String(body.action || '');
+  const isRestockAction = action === 'restock_return';
+
+  if (!isRestockAction && !ALLOWED.includes(body.status)) {
     return json({ ok: false, error: 'Invalid status.' }, 400);
   }
 
   const orderId = String(params.id || '');
   const nextStatus = body.status;
-  const notes = String(body.notes || '').slice(0, 2000);
+  // Omitted notes preserve existing notes; an explicitly supplied empty string clears them.
+  const notes = Object.prototype.hasOwnProperty.call(body, 'notes')
+    ? String(body.notes ?? '').slice(0, 2000)
+    : null;
 
   let order;
 
   try {
     order = await env.DB.prepare(`
-      SELECT id, status, items_json, inventory_state
+      SELECT id, status, items_json, inventory_state, notes
       FROM orders
       WHERE id = ?
     `).bind(orderId).first();
@@ -57,12 +63,117 @@ export async function onRequestPatch({ request, env, params }) {
 
   const state = order.inventory_state || 'untracked';
 
+  // A returned order is only restocked after an administrator confirms inspection.
+  // The state transition, stock increases and ledger movements run in one D1 batch.
+  if (isRestockAction) {
+    if (state !== 'returned_pending' || order.status !== 'returned') {
+      return json({
+        ok: false,
+        error: 'Only a returned order awaiting inspection can be restocked.'
+      }, 409);
+    }
+
+    let returnItems;
+    try {
+      returnItems = JSON.parse(order.items_json);
+      if (!Array.isArray(returnItems) || !returnItems.length) throw new Error('Invalid items');
+    } catch {
+      return json({ ok: false, error: 'Order items are invalid.' }, 500);
+    }
+
+    const returnNames = [...new Set(returnItems.map(item => String(item.name || '')))];
+    if (returnNames.some(name => !name)) {
+      return json({ ok: false, error: 'A product in this order is invalid.' }, 500);
+    }
+
+    let returnProducts;
+    try {
+      returnProducts = await env.DB.prepare(`
+        SELECT id, name
+        FROM products
+        WHERE name IN (${returnNames.map(() => '?').join(',')})
+      `).bind(...returnNames).all();
+    } catch {
+      return json({ ok: false, error: 'Unable to verify returned products.' }, 500);
+    }
+
+    const returnProductByName = new Map(
+      (returnProducts.results || []).map(product => [product.name, product])
+    );
+    const normalizedItems = [];
+
+    for (const item of returnItems) {
+      const product = returnProductByName.get(String(item.name || ''));
+      const qty = Number(item.qty);
+      if (!product || !Number.isInteger(qty) || qty < 1) {
+        return json({ ok: false, error: 'A product or quantity in this order is invalid.' }, 500);
+      }
+      const existing = normalizedItems.find(entry => entry.productId === product.id);
+      if (existing) existing.qty += qty;
+      else normalizedItems.push({ productId: product.id, name: product.name, qty });
+    }
+
+    const restockStatements = [
+      env.DB.prepare(`
+        UPDATE orders
+        SET inventory_state = 'restocked'
+        WHERE id = ?
+          AND status = 'returned'
+          AND inventory_state = 'returned_pending'
+      `).bind(orderId)
+    ];
+
+    for (const item of normalizedItems) {
+      restockStatements.push(
+        env.DB.prepare(`
+          UPDATE products
+          SET stock = stock + ?
+          WHERE id = ?
+            AND EXISTS (
+              SELECT 1 FROM orders
+              WHERE id = ? AND status = 'returned' AND inventory_state = 'restocked'
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM inventory_movements
+              WHERE order_id = ? AND product_id = ? AND movement_type = 'restock'
+            )
+        `).bind(item.qty, item.productId, orderId, orderId, item.productId)
+      );
+
+      restockStatements.push(
+        env.DB.prepare(`
+          INSERT INTO inventory_movements
+            (product_id, order_id, movement_type, quantity, note)
+          SELECT ?, ?, 'restock', ?, ?
+          WHERE EXISTS (
+            SELECT 1 FROM orders
+            WHERE id = ? AND status = 'returned' AND inventory_state = 'restocked'
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM inventory_movements
+            WHERE order_id = ? AND product_id = ? AND movement_type = 'restock'
+          )
+        `).bind(
+          item.productId, orderId, item.qty, `Returned stock restocked after inspection for order ${orderId}`,
+          orderId, orderId, item.productId
+        )
+      );
+    }
+
+    try {
+      await env.DB.batch(restockStatements);
+      return json({ ok: true, inventoryMessage: 'Returned items marked restocked.' });
+    } catch {
+      return json({ ok: false, error: 'Restock could not be completed. Refresh the order and check inventory before retrying.' }, 409);
+    }
+  }
+
   // Existing orders that predate inventory tracking remain untracked.
   if (state === 'untracked') {
     try {
       await env.DB.prepare(`
         UPDATE orders
-        SET status = ?, notes = ?
+        SET status = ?, notes = COALESCE(?, notes)
         WHERE id = ? AND inventory_state = 'untracked'
       `).bind(nextStatus, notes, orderId).run();
 
@@ -180,7 +291,7 @@ export async function onRequestPatch({ request, env, params }) {
   const statements = [
     env.DB.prepare(`
       UPDATE orders
-      SET status = ?, notes = ?, inventory_state = ?
+      SET status = ?, notes = COALESCE(?, notes), inventory_state = ?
       WHERE id = ?
         AND inventory_state = ?
     `).bind(nextStatus, notes, nextInventoryState, orderId, state)
