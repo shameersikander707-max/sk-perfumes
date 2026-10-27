@@ -12,6 +12,58 @@ function newId() {
   return 'SK-' + crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
 }
 
+// Application-level checkout throttle. Store only a SHA-256 hash of the
+// Cloudflare-provided client IP, not the raw IP address.
+const CHECKOUT_LIMIT = 5;
+const CHECKOUT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_RETENTION_MS = 24 * 60 * 60 * 1000;
+
+async function hashClientIp(ip) {
+  const bytes = new TextEncoder().encode(ip);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkCheckoutRateLimit(request, env) {
+  // CF-Connecting-IP is set by Cloudflare at the edge; do not trust a
+  // client-supplied X-Forwarded-For header as a substitute.
+  const clientIp = request.headers.get('CF-Connecting-IP');
+  if (!clientIp) return { ok: false, unavailable: true };
+
+  const now = Date.now();
+  const windowStart = Math.floor(now / CHECKOUT_WINDOW_MS) * CHECKOUT_WINDOW_MS;
+  const ipHash = await hashClientIp(clientIp);
+
+  try {
+    const row = await env.DB.prepare(`
+      INSERT INTO checkout_rate_limits (ip_hash, window_start, request_count)
+      VALUES (?, ?, 1)
+      ON CONFLICT(ip_hash) DO UPDATE SET
+        request_count = CASE
+          WHEN checkout_rate_limits.window_start = excluded.window_start
+            THEN checkout_rate_limits.request_count + 1
+          ELSE 1
+        END,
+        window_start = excluded.window_start
+      RETURNING request_count
+    `).bind(ipHash, windowStart).first();
+
+    // Opportunistically remove stale counters. This table holds one row per
+    // recently seen IP hash, not one row per request.
+    await env.DB.prepare(`
+      DELETE FROM checkout_rate_limits WHERE window_start < ?
+    `).bind(windowStart - RATE_LIMIT_RETENTION_MS).run();
+
+    const count = Number(row?.request_count);
+    const retryAfterSeconds = Math.max(1, Math.ceil((windowStart + CHECKOUT_WINDOW_MS - Date.now()) / 1000));
+    return { ok: Number.isInteger(count) && count <= CHECKOUT_LIMIT, retryAfterSeconds };
+  } catch {
+    // Fail closed if rate limiting cannot be checked; don't accept orders
+    // without the configured abuse control.
+    return { ok: false, unavailable: true };
+  }
+}
+
 export async function onRequestPost({ request, env }) {
   let body;
 
@@ -67,6 +119,23 @@ export async function onRequestPost({ request, env }) {
     if (quantities.get(productName) > 99) {
       return json({ ok: false, error: 'Maximum quantity per product is 99.' }, 400);
     }
+  }
+
+  // Count only requests that passed basic payload validation, but throttle
+  // before product lookup, stock reservation, and order creation.
+  const rateLimit = await checkCheckoutRateLimit(request, env);
+  if (rateLimit.unavailable) {
+    return json({
+      ok: false,
+      error: 'Checkout is temporarily unavailable. Please try again shortly.'
+    }, 503);
+  }
+  if (!rateLimit.ok) {
+    return json({
+      ok: false,
+      error: 'Too many checkout attempts from this connection. Please wait a few minutes and try again.',
+      retryAfterSeconds: rateLimit.retryAfterSeconds
+    }, 429, { 'Retry-After': String(rateLimit.retryAfterSeconds) });
   }
 
   const names = [...quantities.keys()];
